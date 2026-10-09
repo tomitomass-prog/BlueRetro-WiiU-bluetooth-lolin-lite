@@ -1,3 +1,4 @@
+
 name: Build WiiU USB bridge
 
 on:
@@ -14,26 +15,33 @@ jobs:
     name: UART protocol tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - run: python tools/test_packets.py
+
+      - name: Test UART protocol
+        run: python tools/test_packets.py
 
   build-usb-s2:
     name: Build LOLIN S2 Mini (PlatformIO)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
-      - name: Compile firmware
+        run: python -m pip install "platformio==6.1.19"
+
+      - name: Compile S2 firmware
         run: python -m platformio run -d usb-s2 -e lolin_s2_mini
+
       - name: Upload S2 firmware
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lolin-s2-mini-firmware
           path: |
@@ -46,25 +54,47 @@ jobs:
     name: Build LOLIN32 Lite (Bluepad32)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
-      - name: Download official Bluepad32 template
-        run: git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git /tmp/bluepad32-template
-      - name: Insert adapter firmware and board configuration
+        run: python -m pip install "platformio==6.1.19"
+
+      - name: Check PlatformIO version
+        run: python -m platformio --version
+
+      - name: Download Bluepad32 template
         run: |
-          cp bluetooth-esp32/bluepad32_sender.cpp /tmp/bluepad32-template/main/sketch.cpp
-          cp shared/pad_packet.h /tmp/bluepad32-template/main/pad_packet.h
-          printf '\n[env:lolin32_lite]\nboard = lolin32_lite\n' >> /tmp/bluepad32-template/platformio.ini
+          git clone --depth 1 --recurse-submodules \
+            --shallow-submodules \
+            https://github.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git \
+            /tmp/bluepad32-template
+
+      - name: Insert adapter firmware
+        run: |
+          cp bluetooth-esp32/bluepad32_sender.cpp \
+            /tmp/bluepad32-template/main/sketch.cpp
+
+          cp shared/pad_packet.h \
+            /tmp/bluepad32-template/main/pad_packet.h
+
+          printf '\n[env:lolin32_lite]\nboard = lolin32_lite\n' \
+            >> /tmp/bluepad32-template/platformio.ini
+
       - name: Compile LOLIN32 Lite
-        run: python -m platformio run -d /tmp/bluepad32-template -e lolin32_lite
+        run: |
+          python -m platformio run \
+            -d /tmp/bluepad32-template \
+            -e lolin32_lite
+
       - name: Upload LOLIN32 firmware
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lolin32-lite-bluepad32-firmware
           path: |
             /tmp/bluepad32-template/.pio/build/lolin32_lite/*.bin
           if-no-files-found: error
+
