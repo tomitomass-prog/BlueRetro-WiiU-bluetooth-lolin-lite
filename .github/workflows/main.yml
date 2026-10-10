@@ -34,8 +34,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install PlatformIO
-        run: python -m pip install "platformio==6.1.19"
+     - name: Install PlatformIO
+  run: |
+    python -m pip install "platformio==6.1.19"
+    python -m pip install "click==8.1.8"
 
       - name: Compile S2 firmware
         run: python -m platformio run -d usb-s2 -e lolin_s2_mini
